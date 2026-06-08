@@ -13,12 +13,13 @@
   #ui { color:#664444; font:10px monospace; margin-top:3px; letter-spacing:1px; }
   /* ── Touch Controls ── */
   #touch-ui { position:fixed; bottom:0; left:0; right:0; height:130px;
-              pointer-events:none; display:none; z-index:999; }
-  .t-zone { position:absolute; bottom:8px; display:flex; gap:6px; pointer-events:all; }
+              pointer-events:none; display:none; z-index:999;
+              padding-bottom:env(safe-area-inset-bottom); }
+  .t-zone { position:absolute; bottom:10px; display:flex; gap:8px; pointer-events:all; }
   #t-left  { left:10px; }
-  #t-right { right:10px; }
+  #t-right { right:10px; flex-direction:column; gap:6px; align-items:center; }
   .t-btn {
-    width:62px; height:62px; border-radius:50%;
+    width:64px; height:64px; border-radius:50%;
     background:rgba(136,0,0,0.35); border:2px solid rgba(220,60,60,0.5);
     color:rgba(255,180,180,0.9); font-size:22px;
     display:flex; align-items:center; justify-content:center;
@@ -30,9 +31,17 @@
     background:rgba(180,0,0,0.6); border-color:rgba(255,100,100,0.9);
     box-shadow: 0 0 20px rgba(200,0,0,0.6);
   }
-  .t-btn.wide { width:80px; border-radius:18px; font-size:13px; font-weight:bold;
-                font-family:monospace; letter-spacing:1px; }
-  #t-mid { left:50%; transform:translateX(-50%); bottom:10px; }
+  .t-btn.small { width:58px; height:42px; border-radius:14px;
+                 font-size:11px; font-weight:bold; font-family:monospace; letter-spacing:1px; }
+  /* Landscape: shrink controls so they don't cover the canvas */
+  @media (orientation: landscape) {
+    #touch-ui { height:100px; }
+    .t-btn { width:52px; height:52px; font-size:18px; }
+    .t-btn.small { width:52px; height:36px; font-size:10px; }
+    #t-right { flex-direction:row; gap:6px; bottom:8px; align-items:flex-end; }
+    body { justify-content:flex-start; padding-top:2px; }
+    canvas { max-height:calc(100vh - 110px); }
+  }
 </style>
 </head>
 <body>
@@ -45,11 +54,9 @@
     <div class="t-btn" id="btn-left">&#9664;</div>
     <div class="t-btn" id="btn-right">&#9654;</div>
   </div>
-  <div class="t-zone" id="t-mid">
-    <div class="t-btn wide" id="btn-blast">&#128293; BLAST</div>
-  </div>
   <div class="t-zone" id="t-right">
-    <div class="t-btn" id="btn-jump">&#9650; JUMP</div>
+    <div class="t-btn" id="btn-jump">&#9650;<br><span style="font-size:9px">JUMP</span></div>
+    <div class="t-btn small" id="btn-blast">&#128293;<br>BLAST</div>
   </div>
 </div>
 <script>
@@ -60,7 +67,11 @@
 // ============================================================
 var cv = document.getElementById('c');
 var W  = Math.min(window.innerWidth  - 4, 900);
-var H  = Math.min(window.innerHeight - 40, 520);
+var H  = Math.min(window.innerHeight - (('ontouchstart' in window || navigator.maxTouchPoints>0) ? 140 : 40), 520);
+// In landscape on mobile, keep more height for the game
+if (window.innerWidth > window.innerHeight && ('ontouchstart' in window || navigator.maxTouchPoints>0)) {
+  H = Math.min(window.innerHeight - 110, 520);
+}
 cv.width = W; cv.height = H;
 var g = cv.getContext('2d');
 
