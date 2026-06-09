@@ -469,11 +469,9 @@ function drawBoy(){
   // Nose
   g.strokeStyle='rgba(160,100,60,.5)';g.lineWidth=1;
   g.beginPath();g.arc(px+17,py+7,3,0,Math.PI);g.stroke();
-  // Smile (chocolate smudge on lips like the photo!)
-  g.fillStyle='#7a4020';g.beginPath();g.ellipse(px+17,py+11,5,3,0,0,6.28);g.fill();
-  g.strokeStyle='#5a2810';g.lineWidth=1;g.beginPath();g.arc(px+17,py+11,4,.1,Math.PI-.1);g.stroke();
-  // Chocolate smudge on chin (detail from photo!)
-  g.globalAlpha=.55;fC(px+17,py+15,3,'#5a2a10');g.globalAlpha=1;
+  // Smile
+  g.fillStyle='#c06040';g.beginPath();g.ellipse(px+17,py+11,5,2.5,0,0,6.28);g.fill();
+  g.strokeStyle='#8a3818';g.lineWidth=1;g.beginPath();g.arc(px+17,py+11,4,.1,Math.PI-.1);g.stroke();
   g.restore();
 }
 
@@ -618,13 +616,68 @@ function drawWoman(){
 // ── CHARACTER SELECT SCREEN ──────────────────────────────
 var _selHover=-1;
 var CHARS=[
-  {name:'Hunter',  desc:'The boy next door'},
+  {name:'Remi',    desc:'Warrior'},
   {name:'Michael', desc:'Hee hee! 🩎'},
   {name:'Roxanne', desc:'Fearless fighter'},
 ];
+// Draw a scaled-down character preview at screen coords (px,py)
+// Bypasses all game-state guards so it always draws
+function charPreview(ci,px,py){
+  var s=0.9; // scale
+  g.save();g.translate(px,py);g.scale(s,s);
+  var x=0,y=0; // local origin = top-left of character
+  if(ci===0){ // Boy
+    fRR(x+2,y+44,14,10,4,'#e8e8f0');fRR(x+18,y+44,14,10,4,'#e8e8f0');
+    fRR(x+4,y+32,12,16,3,'#3060a0');fRR(x+18,y+32,12,16,3,'#3060a0');
+    fRR(x+2,y+14,30,22,4,'#cc2222');
+    g.strokeStyle='#880000';g.lineWidth=2;
+    for(var li=0;li<4;li++){g.beginPath();g.moveTo(x+2+li*8,y+14);g.lineTo(x+2+li*8,y+36);g.stroke();}
+    fRR(x-2,y+16,10,16,4,'#cc2222');fRR(x+26,y+16,10,16,4,'#cc2222');
+    fC(x+3,y+32,5,'#f5c8a0');fC(x+31,y+32,5,'#f5c8a0');
+    fRR(x+13,y+8,8,10,3,'#f5c8a0');
+    g.fillStyle='#f5c8a0';g.beginPath();g.ellipse(x+17,y+2,13,14,0,0,6.28);g.fill();
+    g.globalAlpha=.3;fC(x+9,y+6,4,'#ff8080');fC(x+25,y+6,4,'#ff8080');g.globalAlpha=1;
+    g.fillStyle='#f0e880';g.beginPath();g.ellipse(x+17,y-6,14,10,0,0,6.28);g.fill();
+    fC(x+12,y+3,4,'white');fC(x+22,y+3,4,'white');
+    fC(x+12,y+3,2.5,'#4488cc');fC(x+22,y+3,2.5,'#4488cc');
+    g.fillStyle='#c06040';g.beginPath();g.ellipse(x+17,y+11,5,2.5,0,0,6.28);g.fill();
+  } else if(ci===1){ // MJ
+    fRR(x+2,y+44,14,10,4,'#111');fRR(x+18,y+44,14,10,4,'#111');
+    fRR(x+3,y+42,12,6,2,'#eee');fRR(x+19,y+42,12,6,2,'#eee');
+    fRR(x+5,y+28,11,18,3,'#111');fRR(x+18,y+28,11,18,3,'#111');
+    fRR(x+1,y+12,32,20,5,'#cc1111');
+    fRR(x+1,y+12,10,8,3,'#1a1a1a');fRR(x+23,y+12,9,8,3,'#1a1a1a');
+    g.strokeStyle='#ffcc00';g.lineWidth=1.5;g.beginPath();g.moveTo(x+16,y+12);g.lineTo(x+16,y+32);g.stroke();
+    fRR(x-3,y+13,10,18,4,'#cc1111');fRR(x+27,y+13,10,18,4,'#cc1111');
+    fC(x+2,y+33,5,'#b87040');fC(x+32,y+33,6,'#f0f0f0');
+    fRR(x+13,y+6,8,10,3,'#b87040');
+    g.fillStyle='#b87040';g.beginPath();g.ellipse(x+17,y+1,13,14,0,0,6.28);g.fill();
+    g.fillStyle='#0d0d0d';g.beginPath();g.ellipse(x+17,y-9,15,13,.1,0,6.28);g.fill();
+    fRR(x+3,y-2,4,10,2,'#0d0d0d');fRR(x+27,y-2,4,10,2,'#0d0d0d');
+    fC(x+12,y+3,4,'white');fC(x+22,y+3,4,'white');
+    fC(x+12,y+3,2.5,'#3a1a08');fC(x+22,y+3,2.5,'#3a1a08');
+    g.fillStyle='#7a2820';g.beginPath();g.ellipse(x+17,y+11,5,2.5,0,0,6.28);g.fill();
+  } else { // Woman
+    fRR(x+2,y+40,14,14,4,'#4a2a1a');fRR(x+18,y+40,14,14,4,'#4a2a1a');
+    fRR(x+4,y+28,12,16,3,'#1a2a4a');fRR(x+18,y+28,12,16,3,'#1a2a4a');
+    fRR(x+2,y+12,30,20,5,'#7733aa');
+    fRR(x-3,y+13,11,16,4,'#7733aa');fRR(x+26,y+13,11,16,4,'#7733aa');
+    fRR(x+2,y+28,30,5,2,'#2a1208');fRR(x+14,y+29,6,4,1,'#c8a040');
+    fC(x+3,y+30,5,'#f0b890');fC(x+31,y+30,5,'#f0b890');
+    fRR(x+13,y+6,8,10,3,'#f0b890');
+    g.fillStyle='#f0b890';g.beginPath();g.ellipse(x+17,y+1,12,13,0,0,6.28);g.fill();
+    g.globalAlpha=.35;fC(x+9,y+5,4,'#ff8888');fC(x+24,y+5,4,'#ff8888');g.globalAlpha=1;
+    g.fillStyle='#3a1a08';g.beginPath();g.ellipse(x+17,y-7,13,10,0,0,6.28);g.fill();
+    g.fillStyle='#4a2210';g.beginPath();g.moveTo(x+28,y-10);g.quadraticCurveTo(x+42,y-2,x+36,y+14);g.lineTo(x+34,y+14);g.quadraticCurveTo(x+40,y+2,x+26,y-8);g.closePath();g.fill();
+    fC(x+28,y-10,3,'#cc3366');
+    fC(x+12,y+2,4,'white');fC(x+22,y+2,4,'white');
+    fC(x+12,y+2,2.5,'#5a2a08');fC(x+22,y+2,2.5,'#5a2a08');
+    g.fillStyle='#cc2244';g.beginPath();g.ellipse(x+17,y+11,5,2.5,0,0,6.28);g.fill();
+  }
+  g.restore();
+}
 function drawCharSelect(){
   g.fillStyle='rgba(0,0,0,.95)';g.fillRect(0,0,W,H);
-  // Title
   lbl('CHOOSE YOUR FIGHTER',W/2,52,'#cc2222',22);
   var cardW=140,cardH=200,gap=30;
   var totalW=CHARS.length*(cardW+gap)-gap;
@@ -632,37 +685,30 @@ function drawCharSelect(){
   CHARS.forEach(function(ch,i){
     var cx=startX+i*(cardW+gap),cy=H/2-cardH/2-10;
     var hover=_selHover===i,sel=selectedChar===i;
-    // Card bg
     g.fillStyle=sel?'rgba(180,20,20,.8)':hover?'rgba(100,0,0,.6)':'rgba(40,0,0,.7)';
     g.beginPath();g.roundRect(cx,cy,cardW,cardH,12);g.fill();
     g.strokeStyle=sel?'#ff4444':hover?'#aa2222':'#660000';
     g.lineWidth=sel?3:2;g.beginPath();g.roundRect(cx,cy,cardW,cardH,12);g.stroke();
-    // Draw mini character at centre of card
-    var mx=cx+cardW/2-P.w/2, my=cy+30;
-    g.save();g.translate(mx-scx(P.x),my-P.y);
-    if(i===0)drawBoy();
-    else if(i===1)drawMJ();
-    else drawWoman();
-    g.restore();
-    // Name
+    // Character preview centred in card
+    charPreview(i, cx+cardW/2-17, cy+30);
     lbl(ch.name,cx+cardW/2,cy+cardH-44,'#ffffff',13);
     lbl(ch.desc,cx+cardW/2,cy+cardH-26,'#aa8888',9);
     if(sel)lbl('★ SELECTED',cx+cardW/2,cy+cardH-8,'#ffcc00',9);
   });
-  // Play button
   var bx=W/2-90,by=H-66,bw=180,bh=44;
   var phover=_mx>bx&&_mx<bx+bw&&_my>by&&_my<by+bh;
   g.fillStyle=phover?'#cc1111':'#880000';
   g.beginPath();g.roundRect(bx,by,bw,bh,12);g.fill();
   g.strokeStyle='#ff4444';g.lineWidth=2;g.beginPath();g.roundRect(bx,by,bw,bh,12);g.stroke();
   lbl('▶ PLAY',W/2,by+29,'#fff',18);
-  // Store play-btn bounds for click detection
   drawCharSelect._bx=bx;drawCharSelect._by=by;drawCharSelect._bw=bw;drawCharSelect._bh=bh;
-  // Card bounds for click
   drawCharSelect._cards=CHARS.map(function(_,i){
     return {x:startX+i*(cardW+gap),y:H/2-cardH/2-10,w:cardW,h:cardH,i:i};
   });
 }
+
+// ── DRAW ZOMBIE ───────────────────────────────────────────────
+function drawZombie(ex,ey,z,alpha){
   var wb=Math.sin(tick*.18)*2;
   g.save();g.translate(ex+z.w/2,ey+z.h/2+wb);g.globalAlpha=alpha||1;
   if(z.dir<0)g.scale(-1,1);
