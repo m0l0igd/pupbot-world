@@ -148,9 +148,10 @@ var STAGES=[
    boss:{name:'VAMPIRE LORD',col:'#1a0020',eye:'#ff00aa',hp:28,type:'vampire'}},
 ];
 
-// ── GAME STATE ─────────────────────────────────────────────────
-var stage=0,state='play',cam=0,tick=0;
-var coins=0,coinProgress=0; // coinProgress = 0-99, resets on 100
+// ── GAME STATE ─────────────────────────────────────────────────────
+var stage=0,state='select',cam=0,tick=0;
+var selectedChar=0; // 0=Boy  1=MJ  2=Woman
+var coins=0,coinProgress=0;
 var particles=[],bolts=[],boltTimer=80,groanTimer=250;
 var enemies=[],platforms=[],graves=[],souls=[],vials=[];
 var keys={};
@@ -403,6 +404,11 @@ function drawWorld(){
 
 // ── DRAW BOY (PLAYER) ─────────────────────────────────────────
 function drawPlayer(){
+  if(selectedChar===1)drawMJ();
+  else if(selectedChar===2)drawWoman();
+  else drawBoy();
+}
+function drawBoy(){
   if(P.dead)return;
   if(P.invTimer>0&&Math.floor(tick/4)%2===0)return;
   var px=scx(P.x),py=P.y;
@@ -471,8 +477,192 @@ function drawPlayer(){
   g.restore();
 }
 
-// ── DRAW ZOMBIE ───────────────────────────────────────────────
-function drawZombie(ex,ey,z,alpha){
+// ── MJ ─ Thriller red jacket ────────────────────────────────────
+function drawMJ(){
+  if(P.dead)return;
+  if(P.invTimer>0&&Math.floor(tick/4)%2===0)return;
+  var px=scx(P.x),py=P.y;
+  g.save();if(P.dir<0){g.scale(-1,1);g.translate(-(px*2+P.w),0);}
+  // Shadow
+  g.globalAlpha=.2;fRR(px+4,FLOOR-2,P.w-8,7,4,'#000');g.globalAlpha=1;
+  // Black loafers
+  fRR(px+2,py+44,14,10,4,'#111');fRR(px+18,py+44,14,10,4,'#111');
+  // White socks peeking out (iconic!)
+  fRR(px+3,py+42,12,6,2,'#eee');fRR(px+19,py+42,12,6,2,'#eee');
+  // Black pants (tight-fitting)
+  fRR(px+5,py+28,11,18,3,'#111');fRR(px+18,py+28,11,18,3,'#111');
+  // Red leather jacket body
+  fRR(px+1,py+12,32,20,5,'#cc1111');
+  // Black jacket stripes on shoulders
+  fRR(px+1,py+12,10,8,3,'#1a1a1a');fRR(px+23,py+12,9,8,3,'#1a1a1a');
+  // Jacket zipper line
+  g.strokeStyle='#ffcc00';g.lineWidth=1.5;
+  g.beginPath();g.moveTo(px+16,py+12);g.lineTo(px+16,py+32);g.stroke();
+  // Zipper teeth
+  g.fillStyle='#ffcc00';
+  for(var zi=0;zi<5;zi++)fC(px+16,py+15+zi*4,1,'#ffcc00');
+  // Red sleeves
+  fRR(px-3,py+13,10,18,4,'#cc1111');fRR(px+27,py+13,10,18,4,'#cc1111');
+  // Black sleeve band at wrist
+  fRR(px-3,py+27,10,5,3,'#111');fRR(px+27,py+27,10,5,3,'#111');
+  // Hands - brown skin
+  fC(px+2,py+33,5,'#b87040');fC(px+32,py+33,5,'#b87040');
+  // LEFT hand: white glove!
+  fC(px+32,py+33,6,'#f0f0f0');
+  g.strokeStyle='#ccc';g.lineWidth=1;
+  for(var fi=0;fi<4;fi++){g.beginPath();g.moveTo(px+29+fi*1.5,py+29);g.lineTo(px+29+fi*1.5,py+27);g.stroke();}
+  // Neck
+  fRR(px+13,py+6,8,10,3,'#b87040');
+  // Head
+  g.fillStyle='#b87040';g.beginPath();g.ellipse(px+17,py+1,13,14,0,0,6.28);g.fill();
+  // Jheri curl hair (big, glossy black)
+  g.fillStyle='#0d0d0d';
+  g.beginPath();g.ellipse(px+17,py-9,15,13,.1,0,6.28);g.fill();
+  // Curl highlights
+  g.strokeStyle='rgba(60,40,80,.7)';g.lineWidth=2;
+  for(var ci2=0;ci2<5;ci2++){
+    var cx2=px+7+ci2*4,cy2=py-12;
+    g.beginPath();g.arc(cx2,cy2,3,Math.PI,0);g.stroke();
+  }
+  // Sideburns
+  fRR(px+3,py-2,4,10,2,'#0d0d0d');fRR(px+27,py-2,4,10,2,'#0d0d0d');
+  // Eyes (dark brown, intense)
+  fC(px+12,py+3,4,'white');fC(px+22,py+3,4,'white');
+  var bl2=tick%160>155?.1:1;
+  g.save();g.scale(1,bl2);
+  fC(px+12,py+3,2.5,'#3a1a08');fC(px+22,py+3,2.5,'#3a1a08');
+  fC(px+12,py+3,1.2,'#000');fC(px+22,py+3,1.2,'#000');g.restore();
+  fC(px+13,py+1,1,'white');fC(px+23,py+1,1,'white');
+  // Thin eyebrows
+  g.strokeStyle='#1a0a00';g.lineWidth=1.5;
+  g.beginPath();g.moveTo(px+9,py-1);g.lineTo(px+15,py-2.5);g.stroke();
+  g.beginPath();g.moveTo(px+19,py-2.5);g.lineTo(px+25,py-1);g.stroke();
+  // Thin iconic nose
+  g.strokeStyle='rgba(80,40,10,.6)';g.lineWidth=1.2;
+  g.beginPath();g.moveTo(px+17,py+4);g.lineTo(px+14,py+9);g.stroke();
+  g.beginPath();g.moveTo(px+17,py+4);g.lineTo(px+20,py+9);g.stroke();
+  // Lips (full)
+  g.fillStyle='#7a2820';
+  g.beginPath();g.ellipse(px+17,py+11,5,2.5,0,0,6.28);g.fill();
+  g.fillStyle='#c04040';
+  g.beginPath();g.ellipse(px+17,py+10,5,1.5,0,0,Math.PI,true);g.fill();
+  g.restore();
+}
+
+// ── WOMAN character ──────────────────────────────────
+function drawWoman(){
+  if(P.dead)return;
+  if(P.invTimer>0&&Math.floor(tick/4)%2===0)return;
+  var px=scx(P.x),py=P.y;
+  g.save();if(P.dir<0){g.scale(-1,1);g.translate(-(px*2+P.w),0);}
+  g.globalAlpha=.2;fRR(px+4,FLOOR-2,P.w-8,7,4,'#000');g.globalAlpha=1;
+  // Boots (dark ankle boots)
+  fRR(px+2,py+40,14,14,4,'#4a2a1a');fRR(px+18,py+40,14,14,4,'#4a2a1a');
+  fRR(px+2,py+48,15,6,3,'#2a1208');fRR(px+18,py+48,15,6,3,'#2a1208');
+  // Jeans (dark wash)
+  fRR(px+4,py+28,12,16,3,'#1a2a4a');fRR(px+18,py+28,12,16,3,'#1a2a4a');
+  // Purple jacket / top
+  fRR(px+2,py+12,30,20,5,'#7733aa');
+  // Jacket trim
+  g.strokeStyle='#aa55dd';g.lineWidth=1.5;
+  g.beginPath();g.moveTo(px+2,py+12);g.lineTo(px+17,py+22);g.lineTo(px+32,py+12);g.stroke();
+  // Belt
+  fRR(px+2,py+28,30,5,2,'#2a1208');
+  fRR(px+14,py+29,6,4,1,'#c8a040');
+  // Sleeves
+  fRR(px-3,py+13,11,16,4,'#7733aa');fRR(px+26,py+13,11,16,4,'#7733aa');
+  // Hands
+  fC(px+3,py+30,5,'#f0b890');fC(px+31,py+30,5,'#f0b890');
+  // Neck
+  fRR(px+13,py+6,8,10,3,'#f0b890');
+  // Head
+  g.fillStyle='#f0b890';g.beginPath();g.ellipse(px+17,py+1,12,13,0,0,6.28);g.fill();
+  // Cheeks
+  g.globalAlpha=.35;fC(px+9,py+5,4,'#ff8888');fC(px+24,py+5,4,'#ff8888');g.globalAlpha=1;
+  // Ponytail base
+  g.fillStyle='#3a1a08';
+  g.beginPath();g.ellipse(px+17,py-7,13,10,0,0,6.28);g.fill();
+  // Ponytail
+  g.fillStyle='#4a2210';
+  g.beginPath();g.moveTo(px+28,py-10);g.quadraticCurveTo(px+42,py-2,px+36,py+14);g.lineTo(px+34,py+14);g.quadraticCurveTo(px+40,py+2,px+26,py-8);g.closePath();g.fill();
+  // Hair band
+  fC(px+28,py-10,3,'#cc3366');
+  // Side hair strands
+  fRR(px+4,py-6,5,12,3,'#3a1a08');fRR(px+25,py-6,5,12,3,'#3a1a08');
+  // Eyes (brown, with lashes)
+  fC(px+12,py+2,4,'white');fC(px+22,py+2,4,'white');
+  var bl3=tick%160>155?.1:1;
+  g.save();g.scale(1,bl3);
+  fC(px+12,py+2,2.5,'#5a2a08');fC(px+22,py+2,2.5,'#5a2a08');
+  fC(px+12,py+2,1.2,'#111');fC(px+22,py+2,1.2,'#111');g.restore();
+  fC(px+13,py,1,'white');fC(px+23,py,1,'white');
+  // Eyelashes
+  g.strokeStyle='#111';g.lineWidth=1.5;
+  [-3,-1,1,3].forEach(function(ox){g.beginPath();g.moveTo(px+12+ox,py-1);g.lineTo(px+12+ox,py-4);g.stroke();});
+  [-3,-1,1,3].forEach(function(ox){g.beginPath();g.moveTo(px+22+ox,py-1);g.lineTo(px+22+ox,py-4);g.stroke();});
+  // Eyebrows (arched)
+  g.strokeStyle='#2a0a00';g.lineWidth=1.5;
+  g.beginPath();g.arc(px+12,py-2,5,Math.PI+.5,Math.PI*2-.5);g.stroke();
+  g.beginPath();g.arc(px+22,py-2,5,Math.PI+.5,Math.PI*2-.5);g.stroke();
+  // Nose (small, feminine)
+  g.strokeStyle='rgba(140,80,40,.4)';g.lineWidth=1;
+  g.beginPath();g.arc(px+17,py+8,2.5,0,Math.PI);g.stroke();
+  // Lips (lipstick)
+  g.fillStyle='#cc2244';
+  g.beginPath();g.ellipse(px+17,py+11,5,2.5,0,0,6.28);g.fill();
+  g.fillStyle='#ff4466';
+  g.beginPath();g.ellipse(px+17,py+10,5,1.5,0,0,Math.PI,true);g.fill();
+  g.restore();
+}
+
+// ── CHARACTER SELECT SCREEN ──────────────────────────────
+var _selHover=-1;
+var CHARS=[
+  {name:'Hunter',  desc:'The boy next door'},
+  {name:'Michael', desc:'Hee hee! 🩎'},
+  {name:'Roxanne', desc:'Fearless fighter'},
+];
+function drawCharSelect(){
+  g.fillStyle='rgba(0,0,0,.95)';g.fillRect(0,0,W,H);
+  // Title
+  lbl('CHOOSE YOUR FIGHTER',W/2,52,'#cc2222',22);
+  var cardW=140,cardH=200,gap=30;
+  var totalW=CHARS.length*(cardW+gap)-gap;
+  var startX=(W-totalW)/2;
+  CHARS.forEach(function(ch,i){
+    var cx=startX+i*(cardW+gap),cy=H/2-cardH/2-10;
+    var hover=_selHover===i,sel=selectedChar===i;
+    // Card bg
+    g.fillStyle=sel?'rgba(180,20,20,.8)':hover?'rgba(100,0,0,.6)':'rgba(40,0,0,.7)';
+    g.beginPath();g.roundRect(cx,cy,cardW,cardH,12);g.fill();
+    g.strokeStyle=sel?'#ff4444':hover?'#aa2222':'#660000';
+    g.lineWidth=sel?3:2;g.beginPath();g.roundRect(cx,cy,cardW,cardH,12);g.stroke();
+    // Draw mini character at centre of card
+    var mx=cx+cardW/2-P.w/2, my=cy+30;
+    g.save();g.translate(mx-scx(P.x),my-P.y);
+    if(i===0)drawBoy();
+    else if(i===1)drawMJ();
+    else drawWoman();
+    g.restore();
+    // Name
+    lbl(ch.name,cx+cardW/2,cy+cardH-44,'#ffffff',13);
+    lbl(ch.desc,cx+cardW/2,cy+cardH-26,'#aa8888',9);
+    if(sel)lbl('★ SELECTED',cx+cardW/2,cy+cardH-8,'#ffcc00',9);
+  });
+  // Play button
+  var bx=W/2-90,by=H-66,bw=180,bh=44;
+  var phover=_mx>bx&&_mx<bx+bw&&_my>by&&_my<by+bh;
+  g.fillStyle=phover?'#cc1111':'#880000';
+  g.beginPath();g.roundRect(bx,by,bw,bh,12);g.fill();
+  g.strokeStyle='#ff4444';g.lineWidth=2;g.beginPath();g.roundRect(bx,by,bw,bh,12);g.stroke();
+  lbl('▶ PLAY',W/2,by+29,'#fff',18);
+  // Store play-btn bounds for click detection
+  drawCharSelect._bx=bx;drawCharSelect._by=by;drawCharSelect._bw=bw;drawCharSelect._bh=bh;
+  // Card bounds for click
+  drawCharSelect._cards=CHARS.map(function(_,i){
+    return {x:startX+i*(cardW+gap),y:H/2-cardH/2-10,w:cardW,h:cardH,i:i};
+  });
+}
   var wb=Math.sin(tick*.18)*2;
   g.save();g.translate(ex+z.w/2,ey+z.h/2+wb);g.globalAlpha=alpha||1;
   if(z.dir<0)g.scale(-1,1);
@@ -869,14 +1059,20 @@ var _btnX=0,_btnY=0,_btnW=200,_btnH=48,_mx=0,_my=0;
 function drawRestartBtn(label){
   var bx=W/2-_btnW/2,by=H/2+72;
   _btnX=bx;_btnY=by;
-  // Shadow
   g.fillStyle='rgba(0,0,0,.5)';g.beginPath();g.roundRect(bx+4,by+4,_btnW,_btnH,12);g.fill();
-  // Button
   var hover=_mx>bx&&_mx<bx+_btnW&&_my>by&&_my<by+_btnH;
   g.fillStyle=hover?'#cc1111':'#880000';
   g.beginPath();g.roundRect(bx,by,_btnW,_btnH,12);g.fill();
   g.strokeStyle='#ff4444';g.lineWidth=2;g.beginPath();g.roundRect(bx,by,_btnW,_btnH,12);g.stroke();
   lbl(label,W/2,by+31,'#fff',16);
+  // Second button: change character
+  var bx2=W/2-80,by2=by+58;
+  var hover2=_mx>bx2&&_mx<bx2+160&&_my>by2&&_my<by2+36;
+  g.fillStyle=hover2?'#444':'#222';
+  g.beginPath();g.roundRect(bx2,by2,160,36,10);g.fill();
+  g.strokeStyle='#666';g.lineWidth=1.5;g.beginPath();g.roundRect(bx2,by2,160,36,10);g.stroke();
+  lbl('Change Character',W/2,by2+23,'#ccc',11);
+  drawRestartBtn._cx=bx2;drawRestartBtn._cy=by2;
 }
 function drawOver(){
   g.fillStyle='rgba(0,0,0,.9)';g.fillRect(0,0,W,H);
@@ -952,25 +1148,59 @@ if(isTouch){
   // Centre START button — restarts on death/win, does nothing mid-game
   var bst=document.getElementById('b-start');
   if(bst){
-    bst.addEventListener('touchstart',function(e){e.preventDefault();startMusic();if(state!=='play')restart();},{passive:false});
-    bst.addEventListener('click',function(){startMusic();if(state!=='play')restart();});
+    bst.addEventListener('touchstart',function(e){e.preventDefault();startMusic();
+      if(state==='play'){state='paused';}
+      else if(state==='paused'){state='play';}
+      else if(state==='over'||state==='win'){state='select';}
+    },{passive:false});
+    bst.addEventListener('click',function(){startMusic();
+      if(state==='play'){state='paused';}
+      else if(state==='paused'){state='play';}
+      else if(state==='over'||state==='win'){state='select';}
+    });
   }
   document.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
 }
 
 // ── MAIN LOOP ────────────────────────────────────────────────
 // Mouse tracking for canvas restart button hover + click
-cv.addEventListener('mousemove',function(e){var r=cv.getBoundingClientRect();_mx=e.clientX-r.left;_my=e.clientY-r.top;});
+cv.addEventListener('mousemove',function(e){
+  var r=cv.getBoundingClientRect();_mx=e.clientX-r.left;_my=e.clientY-r.top;
+  // Hover on char select cards
+  if(state==='select'&&drawCharSelect._cards){
+    _selHover=-1;
+    drawCharSelect._cards.forEach(function(c){
+      if(_mx>c.x&&_mx<c.x+c.w&&_my>c.y&&_my<c.y+c.h)_selHover=c.i;
+    });
+  }
+});
+function handleSelectClick(cx,cy){
+  if(state!=='select')return;
+  if(drawCharSelect._cards){
+    drawCharSelect._cards.forEach(function(c){
+      if(cx>c.x&&cx<c.x+c.w&&cy>c.y&&cy<c.y+c.h)selectedChar=c.i;
+    });
+  }
+  var b=drawCharSelect;
+  if(b._bx&&cx>b._bx&&cx<b._bx+b._bw&&cy>b._by&&cy<b._by+b._bh){
+    state='play';startMusic();restart();
+  }
+}
 cv.addEventListener('click',function(e){
+  var r=cv.getBoundingClientRect();
+  var cx=e.clientX-r.left,cy=e.clientY-r.top;
+  if(state==='select'){handleSelectClick(cx,cy);return;}
   if(state==='over'||state==='win'){
-    var r=cv.getBoundingClientRect();var cx=e.clientX-r.left,cy=e.clientY-r.top;
-    if(cx>_btnX&&cx<_btnX+_btnW&&cy>_btnY&&cy<_btnY+_btnH){startMusic();restart();}
+    if(cx>_btnX&&cx<_btnX+_btnW&&cy>_btnY&&cy<_btnY+_btnH){startMusic();restart();return;}
+    var rc=drawRestartBtn._cx,ry=drawRestartBtn._cy;
+    if(rc&&cx>rc&&cx<rc+160&&cy>ry&&cy<ry+36){state='select';return;}
   }
 });
 cv.addEventListener('touchend',function(e){
+  var r=cv.getBoundingClientRect();var t=e.changedTouches[0];
+  var cx=t.clientX-r.left,cy=t.clientY-r.top;
+  if(state==='select'){e.preventDefault();handleSelectClick(cx,cy);return;}
   if(state==='over'||state==='win'){
-    var r=cv.getBoundingClientRect();var t=e.changedTouches[0];
-    var cx=t.clientX-r.left,cy=t.clientY-r.top;
     if(cx>_btnX&&cx<_btnX+_btnW&&cy>_btnY&&cy<_btnY+_btnH){e.preventDefault();startMusic();restart();}
   }
 },{passive:false});
@@ -978,8 +1208,10 @@ genStage(0);
 function loop(){
   requestAnimationFrame(loop);
   if(state==='play'){update();updateWeapons();}
+  if(state==='select'){drawCharSelect();return;}
   drawBG();drawWorld();drawWeapons();drawEnemies();drawBoss();drawBlasts();drawPlayer();drawParticles();drawHUD();drawMsg();
   if(state==='play')drawStageTitle();
+  if(state==='paused'){g.fillStyle='rgba(0,0,0,.55)';g.fillRect(0,0,W,H);lbl('PAUSED',W/2,H/2,'#ffffff',36);lbl('Press START to resume',W/2,H/2+40,'#aa6666',13);}
   if(state==='over')drawOver();
   if(state==='win')drawWin();
 }
