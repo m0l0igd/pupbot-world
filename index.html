@@ -160,14 +160,10 @@ var P={x:100,y:FLOOR-60,vx:0,vy:0,w:34,h:52,onGround:false,dir:1,
 
 // ── WEAPONS ────────────────────────────────────────────────────
 var WEAPONS=[
-  {name:'Pistol',   e:'🔫', col:'#888',  vx:14, vy:-0.5, dmg:1, ammo:12, cd:10, bounce:1, multi:1, spread:0},
-  {name:'Shotgun',  e:'🪖', col:'#a88', vx:10, vy:0,    dmg:1, ammo:6,  cd:24, bounce:1, multi:5, spread:.4},
-  {name:'Uzi',      e:'💨', col:'#88a',  vx:16, vy:-0.3, dmg:1, ammo:24, cd:4,  bounce:2, multi:1, spread:.1},
-  {name:'Bazooka',  e:'💣', col:'#fa0',  vx:9,  vy:0.2,  dmg:3, ammo:4,  cd:30, bounce:0, multi:1, spread:0, explode:true},
-  {name:'Sword',    e:'⚔️', col:'#cce',  vx:0,  vy:0,    dmg:2, ammo:20, cd:14, bounce:0, multi:0, spread:0, melee:true, range:70},
-  {name:'Axe',      e:'🪓', col:'#a84',  vx:0,  vy:0,    dmg:3, ammo:14, cd:18, bounce:0, multi:0, spread:0, melee:true, range:60},
-  {name:'Laser',    e:'🔴', col:'#f00',  vx:20, vy:0,    dmg:2, ammo:15, cd:8,  bounce:0, multi:1, spread:0, pierce:true},
-  {name:'Boomerang',e:'🪃', col:'#fa8',  vx:8,  vy:-1,   dmg:1, ammo:8,  cd:20, bounce:4, multi:1, spread:0},
+  {name:'Pistol',   e:'🔫', col:'#aaa',  vx:15, vy:-0.4, dmg:1, ammo:30, cd:10, bounce:2, multi:1, spread:0},
+  {name:'Shotgun',  e:'🪖', col:'#c99', vx:11, vy:0.1,  dmg:1, ammo:18, cd:24, bounce:1, multi:5, spread:.38},
+  {name:'Uzi',      e:'💨', col:'#88f',  vx:17, vy:-0.2, dmg:1, ammo:60, cd:4,  bounce:2, multi:1, spread:.08},
+  {name:'Laser',    e:'🔴', col:'#f44',  vx:22, vy:0,    dmg:2, ammo:40, cd:8,  bounce:0, multi:1, spread:0, pierce:true},
 ];
 var POWERUPS=[
   {name:'Speed',    e:'⚡', col:'#ff0', effect:'speed',  dur:300},
@@ -196,6 +192,10 @@ var ZT=[
   {col:'#1a1a18',eye:'#00aaff',spd:1.0,hp:1,pts:150,sz:26},
   {col:'#2a1808',eye:'#ff3300',spd:1.2,hp:2,pts:300,sz:34},
   {col:'#101010',eye:'#cc00cc',spd:1.6,hp:1,pts:150,sz:24},
+  // Mummies — bandage-wrapped, slow, tanky
+  {col:'#c8b87a',eye:'#22ffaa',spd:0.65,hp:3,pts:450,sz:32,mummy:true},
+  {col:'#d4c48a',eye:'#00ff88',spd:0.5, hp:4,pts:600,sz:38,mummy:true},
+  {col:'#bfad70',eye:'#ffee00',spd:0.8, hp:2,pts:350,sz:28,mummy:true},
 ];
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -687,9 +687,9 @@ function update(){
     var b=P.blasts[bi];if(!b.alive){P.blasts.splice(bi,1);continue;}
     b.x+=b.vx;b.y+=b.vy;b.vy+=.3;b.rot+=.28;b.traveled+=Math.abs(b.vx);
     var maxBounce=P.weapon?WEAPONS[P.weapon].bounce:4;
-    var maxTravel=P.weapon&&WEAPONS[P.weapon].pierce?W*2:380;
+    var maxTravel=P.weapon&&WEAPONS[P.weapon].pierce?W*6:1140;
     if(b.y>=FLOOR-4){b.vy=-(Math.abs(b.vy)*.78+2);b.bounces++;if(b.bounces>maxBounce||Math.abs(b.vy)<1.5)b.alive=false;}
-    if(b.traveled>maxTravel||b.x<cam-20||b.x>cam+W+20)b.alive=false;
+    if(b.traveled>maxTravel||b.x<cam-800||b.x>cam+W+800)b.alive=false;
     for(var ei2=0;ei2<enemies.length;ei2++){var e=enemies[ei2];if(!e.alive||!b.alive)continue;if(Math.abs(b.x-e.x-e.w/2)<e.w/2+8&&Math.abs(b.y-e.y-e.h/2)<e.h/2+8){var bdmg=(b.dmg||1)*(P.powerupType==='dmg2x'?2:1);e.hp-=bdmg;if(!b.pierce)b.alive=false;SFX.stomp();burst(e.x+e.w/2,e.y,'#660000',5);if(b.explode){enemies.forEach(function(e3){if(!e3.alive||e3===e)return;if(Math.hypot(b.x-e3.x-e3.w/2,b.y-e3.y-e3.h/2)<60){e3.hp-=bdmg;burst(e3.x+e3.w/2,e3.y,'#ff4400',3);}});}if(e.hp<=0){e.alive=false;P.score+=e.pts;burst(e.x+e.w/2,e.y,'#440000',8);}}}
     if(b.alive&&boss.active&&boss.alive&&!boss.dead){if(Math.abs(b.x-(boss.x+boss.w/2))<boss.w/2+10&&Math.abs(b.y-(boss.y+boss.h/2))<boss.h/2+10){var bbd=(b.dmg||1)*(P.powerupType==='dmg2x'?2:1);boss.hp-=bbd;boss.hitTimer=18;if(!b.pierce)b.alive=false;SFX.hurt();burst(boss.x+boss.w/2,boss.y,'#4400aa',6);if(boss.hp<=0)killBoss();}}
   }
