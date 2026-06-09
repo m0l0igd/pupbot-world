@@ -36,6 +36,9 @@ canvas{display:block;image-rendering:pixelated;border:2px solid #440000;
     <div class="tb" id="b-left">&#9664;</div>
     <div class="tb" id="b-right">&#9654;</div>
   </div>
+  <div style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);pointer-events:all">
+    <div class="tb" id="b-start" style="width:72px;height:42px;border-radius:14px;font-size:11px;font-weight:bold;font-family:monospace;background:rgba(180,0,0,.5);border-color:rgba(255,80,80,.7)">&#9654; START</div>
+  </div>
   <div class="tz" id="tr">
     <div class="tb" id="b-jump">&#9650;<br><span style="font-size:9px">JUMP</span></div>
     <div class="tb" id="b-blast">&#128293;<br><span style="font-size:9px">BLAST</span></div>
@@ -861,8 +864,33 @@ function drawEnemies(){
 
 // ── OVERLAYS ─────────────────────────────────────────────────
 function drawParticles(){particles.forEach(function(p){var al=Math.max(0,1-p.life/p.max);g.globalAlpha=al;fC(p.x-cam,p.y,3,p.col);});g.globalAlpha=1;}
-function drawOver(){g.fillStyle='rgba(0,0,0,.9)';g.fillRect(0,0,W,H);lbl('YOU DIED',W/2,H/2-48,'#880000',52);lbl('Score:'+P.score,W/2,H/2+6,'#aa5555',16);lbl('SPACE or ENTER to restart',W/2,H/2+46,'#663333',13);}
-function drawWin(){g.fillStyle='rgba(0,0,0,.92)';g.fillRect(0,0,W,H);lbl('VICTORY!',W/2,H/2-52,'#cc2222',42);lbl('All 10 stages cleared!',W/2,H/2-4,'#886666',15);lbl('Score:'+P.score+'  Coins:'+coins,W/2,H/2+34,'#664444',13);lbl('SPACE or ENTER to play again',W/2,H/2+70,'#442222',12);}
+// Canvas restart button bounds (updated each frame)
+var _btnX=0,_btnY=0,_btnW=200,_btnH=48,_mx=0,_my=0;
+function drawRestartBtn(label){
+  var bx=W/2-_btnW/2,by=H/2+72;
+  _btnX=bx;_btnY=by;
+  // Shadow
+  g.fillStyle='rgba(0,0,0,.5)';g.beginPath();g.roundRect(bx+4,by+4,_btnW,_btnH,12);g.fill();
+  // Button
+  var hover=_mx>bx&&_mx<bx+_btnW&&_my>by&&_my<by+_btnH;
+  g.fillStyle=hover?'#cc1111':'#880000';
+  g.beginPath();g.roundRect(bx,by,_btnW,_btnH,12);g.fill();
+  g.strokeStyle='#ff4444';g.lineWidth=2;g.beginPath();g.roundRect(bx,by,_btnW,_btnH,12);g.stroke();
+  lbl(label,W/2,by+31,'#fff',16);
+}
+function drawOver(){
+  g.fillStyle='rgba(0,0,0,.9)';g.fillRect(0,0,W,H);
+  lbl('YOU DIED',W/2,H/2-48,'#880000',52);
+  lbl('Score: '+P.score,W/2,H/2+10,'#aa5555',16);
+  drawRestartBtn('&#9654; PLAY AGAIN');
+}
+function drawWin(){
+  g.fillStyle='rgba(0,0,0,.92)';g.fillRect(0,0,W,H);
+  lbl('VICTORY!',W/2,H/2-52,'#cc2222',42);
+  lbl('All 10 stages cleared!',W/2,H/2-4,'#886666',15);
+  lbl('Score: '+P.score+'  Coins: '+coins,W/2,H/2+34,'#664444',13);
+  drawRestartBtn('&#9654; PLAY AGAIN');
+}
 
 var _msg='',_msgT=0;
 function showMsg(t,d){_msg=t;_msgT=d||120;}
@@ -897,7 +925,7 @@ function restart(){
 // ── INPUT ────────────────────────────────────────────────────
 document.addEventListener('keydown',function(e){
   keys[e.code]=true;startMusic();
-  if(state!=='play'){if(e.code==='Space'||e.code==='Enter')restart();return;}
+  if(state!=='play'){return;}  // keyboard does nothing on death/win screens
   if(P.dead)return;
   if((e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW')&&P.onGround){P.vy=-13.5;P.onGround=false;SFX.jump();}
     if((e.code==='KeyZ'||e.code==='KeyF')&&P.blastCd<=0){
@@ -921,10 +949,31 @@ if(isTouch){
     el.addEventListener('touchend',function(e){e.preventDefault();delete keys[code];el.classList.remove('pressed');},{passive:false});
     el.addEventListener('touchcancel',function(e){e.preventDefault();delete keys[code];el.classList.remove('pressed');},{passive:false});
   });
+  // Centre START button — restarts on death/win, does nothing mid-game
+  var bst=document.getElementById('b-start');
+  if(bst){
+    bst.addEventListener('touchstart',function(e){e.preventDefault();startMusic();if(state!=='play')restart();},{passive:false});
+    bst.addEventListener('click',function(){startMusic();if(state!=='play')restart();});
+  }
   document.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
 }
 
 // ── MAIN LOOP ────────────────────────────────────────────────
+// Mouse tracking for canvas restart button hover + click
+cv.addEventListener('mousemove',function(e){var r=cv.getBoundingClientRect();_mx=e.clientX-r.left;_my=e.clientY-r.top;});
+cv.addEventListener('click',function(e){
+  if(state==='over'||state==='win'){
+    var r=cv.getBoundingClientRect();var cx=e.clientX-r.left,cy=e.clientY-r.top;
+    if(cx>_btnX&&cx<_btnX+_btnW&&cy>_btnY&&cy<_btnY+_btnH){startMusic();restart();}
+  }
+});
+cv.addEventListener('touchend',function(e){
+  if(state==='over'||state==='win'){
+    var r=cv.getBoundingClientRect();var t=e.changedTouches[0];
+    var cx=t.clientX-r.left,cy=t.clientY-r.top;
+    if(cx>_btnX&&cx<_btnX+_btnW&&cy>_btnY&&cy<_btnY+_btnH){e.preventDefault();startMusic();restart();}
+  }
+},{passive:false});
 genStage(0);
 function loop(){
   requestAnimationFrame(loop);
