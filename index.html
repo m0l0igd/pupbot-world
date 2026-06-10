@@ -38,18 +38,20 @@ canvas{display:block;image-rendering:pixelated;border:2px solid #440000;
 /* ── LANDSCAPE: single thin strip, full-width canvas ─────────────── */
 @media(orientation:landscape){
   body{justify-content:flex-start;padding-top:0}
-  #touch-ui{height:68px}
-  /* Canvas takes everything above the strip */
-  canvas{max-height:calc(100vh - 68px);width:100vw!important}
-  /* Flat single-row layout */
-  #dpad{grid-template-columns:36px 36px 36px;
-        grid-template-rows:36px 36px 36px;
-        gap:2px;bottom:2px;left:4px;
-        transform:scale(0.72);transform-origin:bottom left}
-  #tr{bottom:10px;right:6px;gap:6px}
-  #centre-btns{bottom:10px;gap:4px;flex-direction:row}
-  .tb{width:44px;height:44px;font-size:16px}
-  .ctb{width:58px!important;height:28px!important;font-size:9px!important}
+  #touch-ui{height:76px}
+  canvas{max-height:calc(100vh - 76px)!important;width:100vw!important;max-width:none!important}
+  /* D-pad: real px, NO transform — touch hit areas match visuals exactly */
+  #dpad{grid-template-columns:34px 34px 34px;
+        grid-template-rows:34px 34px 34px;
+        gap:2px;bottom:4px;left:6px}
+  .dpad-empty{width:34px!important;height:34px!important}
+  /* All touch buttons 34px in landscape */
+  .tb{width:34px!important;height:34px!important;font-size:13px!important;border-width:1.5px!important}
+  /* Action buttons on right: side by side */
+  #tr{bottom:20px;right:8px;gap:8px;flex-direction:row!important}
+  /* Centre buttons: side by side, vertically centred in strip */
+  #centre-btns{bottom:18px;gap:6px;flex-direction:row!important}
+  .ctb{width:52px!important;height:30px!important;font-size:9px!important;border-radius:8px!important}
 }
 </style></head><body>
 <canvas id="c"></canvas>
@@ -889,7 +891,11 @@ function update(){
   tick++;
   groanTimer--;if(groanTimer<=0){groanTimer=ri(200,500);if(Math.random()<.5)SFX.groan();}
   var sc=STAGES[stage];
-  if(!boss.active&&!P.dead)cam=Math.min(cam+.65,WORLD-W);
+  if(!boss.active&&!P.dead){
+    // Scroll faster only when player sprints right; gentle crawl otherwise
+    var autoSpd=P.vx>3?0.55:P.vx>0?0.2:0.1;
+    cam=Math.min(cam+autoSpd,WORLD-W);
+  }
 
   if(P.dead){
     P.deathVy+=.5;P.y+=P.deathVy;
@@ -913,7 +919,9 @@ function update(){
   }
   P.x=Math.max(0,pNextX);P.y+=P.vy;
   var tc=P.x-W*.35;if(tc>cam)cam=Math.min(tc,WORLD-W);cam=Math.max(0,cam);
-  if(P.x<cam+20)P.x=cam+20;if(P.x+P.w>cam+W-20)P.x=cam+W-P.w-20;
+  // Left boundary: push player right, grant brief invincibility — no life lost
+  if(P.x<cam+20){P.x=cam+20;if(P.invTimer<=0)P.invTimer=30;}
+  if(P.x+P.w>cam+W-20)P.x=cam+W-P.w-20;
   P.onGround=false;
   var pp=landOn(P.x,P.y,P.w,P.h,P.vy,P.dropping>0);if(pp){P.y=pp.y-P.h;P.vy=0;P.onGround=true;}
   if(P.y>H+20){P.dead=true;P.deathVy=-8;SFX.hurt();}
@@ -1309,14 +1317,16 @@ function drawOver(){
   g.fillStyle='rgba(0,0,0,.9)';g.fillRect(0,0,W,H);
   lbl('YOU DIED',W/2,H/2-48,'#880000',52);
   lbl('Score: '+P.score,W/2,H/2+10,'#aa5555',16);
-  drawRestartBtn('&#9654; PLAY AGAIN');
+  if(!isTouch){drawRestartBtn('&#9654; PLAY AGAIN');}
+  else{lbl('Tap START to play again',W/2,H/2+52,'#663333',12);}
 }
 function drawWin(){
   g.fillStyle='rgba(0,0,0,.92)';g.fillRect(0,0,W,H);
   lbl('VICTORY!',W/2,H/2-52,'#cc2222',42);
   lbl('All 10 stages cleared!',W/2,H/2-4,'#886666',15);
   lbl('Score: '+P.score+'  Coins: '+coins,W/2,H/2+34,'#664444',13);
-  drawRestartBtn('&#9654; PLAY AGAIN');
+  if(!isTouch){drawRestartBtn('&#9654; PLAY AGAIN');}
+  else{lbl('Tap START to play again',W/2,H/2+70,'#442222',12);}
 }
 
 var _msg='',_msgT=0;
