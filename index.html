@@ -56,7 +56,7 @@ canvas{display:block;image-rendering:pixelated;border:2px solid #440000;
 }
 </style></head><body>
 <canvas id="c"></canvas>
-<div id="ui">ARROWS/WASD=MOVE | SPACE=JUMP | Z=BLAST | STOMP ENEMIES</div>
+<div id="ui">ARROWS/WASD=MOVE | SPACE=JUMP | Z=BLAST | X=SPECIAL | STOMP ENEMIES</div>
 <div id="touch-ui">
   <!-- D-Pad: corners are invisible spacers, cross buttons are active -->
   <div id="dpad">
@@ -70,14 +70,13 @@ canvas{display:block;image-rendering:pixelated;border:2px solid #440000;
     <div class="tb" id="b-down" style="border-radius:10px;font-size:16px">&#9660;</div>
     <div class="tb dpe" id="d-dr">&#8600;</div>
   </div>
-  <!-- Centre: START + SPEC, stacked vertically, clear of d-pad and right buttons -->
+  <!-- Centre: just START now - SPEC moved to right cluster -->
   <div id="centre-btns">
     <div class="tb ctb" id="b-start" style="background:rgba(180,0,0,.55);border-color:rgba(255,80,80,.7)">&#9654; START</div>
-    <div class="tb ctb" id="b-special" style="background:rgba(80,0,150,.55);border-color:rgba(180,80,255,.7)">&#9889; SPEC</div>
   </div>
-  <!-- Right: Jump + Blast side by side -->
+  <!-- Right: Special + Blast (jump removed) -->
   <div id="tr">
-    <div class="tb" id="b-jump">&#9650;<br><span style="font-size:7px">JUMP</span></div>
+    <div class="tb" id="b-special" style="background:rgba(80,0,150,.55);border-color:rgba(180,80,255,.7)">&#9889;<br><span style="font-size:7px">SPEC</span></div>
     <div class="tb" id="b-blast">&#128293;<br><span style="font-size:7px">BLAST</span></div>
   </div>
 </div>
@@ -2270,6 +2269,7 @@ document.addEventListener('keydown',function(e){
     if((e.code==='KeyZ'||e.code==='KeyF')&&P.blastCd<=0){
       fireWeapon();
     }
+    if(e.code==='KeyX'){fireSpecial();}
 });
 document.addEventListener('keyup',function(e){delete keys[e.code];});
 function _audioUnlock(){startMusic();}
