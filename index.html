@@ -265,19 +265,19 @@ function genStage(si){
   for(var pi2=400;pi2<WORLD-400;pi2+=ri(450,700)){
     powerups.push({x:pi2,y:FLOOR-24,alive:true,type:ri(0,POWERUPS.length),bob:rnd()*6.28});
   }
-  // Graves
-  for(var gi=0;gi<50;gi++){
-    var gx=300+gi*(WORLD/52)+ri(-40,40);
+  // Graves — halved count, wider spacing
+  for(var gi=0;gi<22;gi++){
+    var gx=500+gi*(WORLD/24)+ri(-60,60);
     var zt=ZT[ri(0,ZT.length)];
     graves.push({x:gx,y:FLOOR,state:'idle',timer:0,emergeY:0,zombie:null,type:zt,shakeX:0});
   }
   // Obstacles on ground (must jump over; enemies bounce off)
   var OTYPES=[
-    {t:'wall', w:22,h:70,col:'#3a3028',col2:'#2a2018'},
-    {t:'crate',w:32,h:48,col:'#7a5530',col2:'#5a3a18'},
-    {t:'fence',w:14,h:80,col:'#4a3820',col2:'#6a5038'},
-    {t:'barrel',w:28,h:52,col:'#2a3848',col2:'#1a2838'},
-    {t:'slab', w:40,h:38,col:'#383028',col2:'#282018'},
+    {t:'wall', w:24,h:74,col:'#5a4a38',col2:'#3a2a18'},
+    {t:'crate',w:36,h:52,col:'#9a6a38',col2:'#6a4a20'},
+    {t:'fence',w:16,h:84,col:'#6a5030',col2:'#8a7050'},
+    {t:'barrel',w:30,h:56,col:'#2a4a60',col2:'#1a2a40'},
+    {t:'slab', w:44,h:42,col:'#504840',col2:'#302820'},
   ];
   var ox=320;
   while(ox<WORLD-600){
@@ -285,10 +285,11 @@ function genStage(si){
     obstacles.push({x:ox,y:FLOOR-ot.h,w:ot.w,h:ot.h,t:ot.t,col:ot.col,col2:ot.col2});
     ox+=ri(180,360);
   }
-  // Patrol enemies on ground — 12, spaced so they don't stack
-  for(var ei=0;ei<12;ei++){
-    var et=ZT[ri(0,ZT.length)];var ex=300+ei*380+ri(-30,30);
-    enemies.push({x:ex,y:FLOOR-et.sz,vx:-et.spd,vy:0,w:et.sz,h:et.sz,dir:-1,
+  // Patrol enemies on ground — 6 only, very spread out, alternating heights
+  for(var ei=0;ei<6;ei++){
+    var et=ZT[ri(0,ZT.length)];var ex=600+ei*700+ri(-60,60);
+    var ey=ei%2===0?FLOOR-et.sz:FLOOR-et.sz-ri(0,20);
+    enemies.push({x:ex,y:ey,vx:(ei%2===0?1:-1)*et.spd,vy:0,w:et.sz,h:et.sz,dir:ei%2===0?1:-1,
       alive:true,deathAnim:0,stunTimer:0,hp:et.hp,initHp:et.hp,col:et.col,eye:et.eye,spd:et.spd,pts:et.pts});
   }
   // Boss — always 8 hits
@@ -1194,6 +1195,11 @@ function drawObstacles(){
     var ox2=scx(ob.x);
     if(ox2<-60||ox2>W+60)continue;
     var oy2=ob.y, ow=ob.w, oh=ob.h;
+    // Glow outline so obstacles read clearly against everything else
+    g.shadowColor='#ff8800';g.shadowBlur=12;
+    g.strokeStyle='rgba(255,180,60,.9)';g.lineWidth=2;
+    g.beginPath();g.roundRect(ox2-1,oy2-1,ow+2,oh+2,3);g.stroke();
+    g.shadowBlur=0;
     if(ob.t==='wall'){
       // Stone wall — brick pattern
       fRR(ox2,oy2,ow,oh,2,ob.col);
