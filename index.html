@@ -37,21 +37,19 @@ canvas{display:block;image-rendering:pixelated;border:2px solid #440000;
 
 /* ── LANDSCAPE: single thin strip, full-width canvas ─────────────── */
 @media(orientation:landscape){
-  body{justify-content:flex-start;padding-top:0}
-  #touch-ui{height:76px}
-  canvas{max-height:calc(100vh - 76px)!important;width:100vw!important;max-width:none!important}
-  /* D-pad: real px, NO transform — touch hit areas match visuals exactly */
-  #dpad{grid-template-columns:34px 34px 34px;
-        grid-template-rows:34px 34px 34px;
-        gap:2px;bottom:4px;left:6px}
-  .dpad-empty{width:34px!important;height:34px!important}
-  /* All touch buttons 34px in landscape */
-  .tb{width:34px!important;height:34px!important;font-size:13px!important;border-width:1.5px!important}
-  /* Action buttons on right: side by side */
-  #tr{bottom:20px;right:8px;gap:8px;flex-direction:row!important}
-  /* Centre buttons: side by side, vertically centred in strip */
-  #centre-btns{bottom:18px;gap:6px;flex-direction:row!important}
-  .ctb{width:52px!important;height:30px!important;font-size:9px!important;border-radius:8px!important}
+  body{justify-content:flex-start;padding-top:0;align-items:flex-start}
+  #touch-ui{height:80px}
+  /* D-pad: exact px — NO transform so touch areas = visual areas */
+  #dpad{grid-template-columns:32px 32px 32px;
+        grid-template-rows:32px 32px 32px;
+        gap:2px;bottom:6px;left:8px}
+  .dpad-empty{width:32px!important;height:32px!important;
+              background:none!important;border:none!important;box-shadow:none!important}
+  .tb{width:32px!important;height:32px!important;font-size:12px!important;
+      border-width:1px!important;border-radius:8px!important}
+  #tr{bottom:22px;right:10px;gap:10px;flex-direction:row!important}
+  #centre-btns{bottom:22px;gap:8px;flex-direction:row!important}
+  .ctb{width:56px!important;height:32px!important;font-size:9px!important;border-radius:8px!important}
 }
 </style></head><body>
 <canvas id="c"></canvas>
@@ -85,10 +83,26 @@ canvas{display:block;image-rendering:pixelated;border:2px solid #440000;
 'use strict';
 var cv=document.getElementById('c');
 var isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
-var W=Math.min(innerWidth-4,900);
-var H=Math.min(innerHeight-(isTouch?170:40),520);
-if(innerWidth>innerHeight&&isTouch){W=innerWidth;H=Math.min(innerHeight-68,480);}
-cv.width=W;cv.height=H;var g=cv.getContext('2d');
+var W,H,g;
+function resizeCanvas(){
+  var landscape=innerWidth>innerHeight;
+  if(isTouch&&landscape){
+    W=innerWidth;
+    H=innerHeight-80;            // 80px touch strip
+  } else if(isTouch){
+    W=Math.min(innerWidth,900);
+    H=Math.min(innerHeight-170,520);
+  } else {
+    W=Math.min(innerWidth-4,900);
+    H=Math.min(innerHeight-40,520);
+  }
+  // Set canvas logical pixels = CSS pixels (no scaling artifacts)
+  cv.width=W; cv.height=H;
+  cv.style.width=W+'px'; cv.style.height=H+'px';
+  if(g){FLOOR=H-60;}  // update floor when resizing mid-game
+}
+resizeCanvas();
+g=cv.getContext('2d');
 if(!g.roundRect)g.roundRect=function(x,y,w,h,r){r=Math.min(+r||0,w/2,h/2);
   this.beginPath();this.moveTo(x+r,y);this.lineTo(x+w-r,y);this.arcTo(x+w,y,x+w,y+r,r);
   this.lineTo(x+w,y+h-r);this.arcTo(x+w,y+h,x+w-r,y+h,r);
@@ -1295,38 +1309,18 @@ function drawParticles(){particles.forEach(function(p){var al=Math.max(0,1-p.lif
 // Canvas restart button bounds (updated each frame)
 var _btnX=0,_btnY=0,_btnW=200,_btnH=48,_mx=0,_my=0;
 var drawPause={};
-function drawRestartBtn(label){
-  var bx=W/2-_btnW/2,by=H/2+72;
-  _btnX=bx;_btnY=by;
-  g.fillStyle='rgba(0,0,0,.5)';g.beginPath();g.roundRect(bx+4,by+4,_btnW,_btnH,12);g.fill();
-  var hover=_mx>bx&&_mx<bx+_btnW&&_my>by&&_my<by+_btnH;
-  g.fillStyle=hover?'#cc1111':'#880000';
-  g.beginPath();g.roundRect(bx,by,_btnW,_btnH,12);g.fill();
-  g.strokeStyle='#ff4444';g.lineWidth=2;g.beginPath();g.roundRect(bx,by,_btnW,_btnH,12);g.stroke();
-  lbl(label,W/2,by+31,'#fff',16);
-  // Second button: change character
-  var bx2=W/2-80,by2=by+58;
-  var hover2=_mx>bx2&&_mx<bx2+160&&_my>by2&&_my<by2+36;
-  g.fillStyle=hover2?'#444':'#222';
-  g.beginPath();g.roundRect(bx2,by2,160,36,10);g.fill();
-  g.strokeStyle='#666';g.lineWidth=1.5;g.beginPath();g.roundRect(bx2,by2,160,36,10);g.stroke();
-  lbl('Change Character',W/2,by2+23,'#ccc',11);
-  drawRestartBtn._cx=bx2;drawRestartBtn._cy=by2;
-}
 function drawOver(){
   g.fillStyle='rgba(0,0,0,.9)';g.fillRect(0,0,W,H);
   lbl('YOU DIED',W/2,H/2-48,'#880000',52);
   lbl('Score: '+P.score,W/2,H/2+10,'#aa5555',16);
-  if(!isTouch){drawRestartBtn('&#9654; PLAY AGAIN');}
-  else{lbl('Tap START to play again',W/2,H/2+52,'#663333',12);}
+  lbl(isTouch?'Tap START to continue':'Press ENTER to continue',W/2,H/2+52,'#662222',13);
 }
 function drawWin(){
   g.fillStyle='rgba(0,0,0,.92)';g.fillRect(0,0,W,H);
   lbl('VICTORY!',W/2,H/2-52,'#cc2222',42);
   lbl('All 10 stages cleared!',W/2,H/2-4,'#886666',15);
   lbl('Score: '+P.score+'  Coins: '+coins,W/2,H/2+34,'#664444',13);
-  if(!isTouch){drawRestartBtn('&#9654; PLAY AGAIN');}
-  else{lbl('Tap START to play again',W/2,H/2+70,'#442222',12);}
+  lbl(isTouch?'Tap START to continue':'Press ENTER to continue',W/2,H/2+70,'#662222',13);
 }
 
 var _msg='',_msgT=0;
@@ -1444,9 +1438,7 @@ cv.addEventListener('click',function(e){
     if(dp&&dp._ccx&&cx>dp._ccx&&cx<dp._ccx+dp._ccw&&cy>dp._ccy&&cy<dp._ccy+dp._cch){state='select';return;}
   }
   if(state==='over'||state==='win'){
-    if(cx>_btnX&&cx<_btnX+_btnW&&cy>_btnY&&cy<_btnY+_btnH){startMusic();restart();return;}
-    var rc=drawRestartBtn._cx,ry=drawRestartBtn._cy;
-    if(rc&&cx>rc&&cx<rc+160&&cy>ry&&cy<ry+36){state='select';return;}
+    state='select';return;
   }
 });
 cv.addEventListener('touchend',function(e){
