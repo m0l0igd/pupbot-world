@@ -304,9 +304,9 @@ function genStage(si){
   for(var pi2=400;pi2<WORLD-400;pi2+=ri(450,700)){
     powerups.push({x:pi2,y:FLOOR-24,alive:true,type:ri(0,POWERUPS.length),bob:rnd()*6.28});
   }
-  // Graves — halved count, wider spacing
-  for(var gi=0;gi<22;gi++){
-    var gx=500+gi*(WORLD/24)+ri(-60,60);
+  // Graves — more spawners, spread across world
+  for(var gi=0;gi<40;gi++){
+    var gx=400+gi*(WORLD/42)+ri(-60,60);
     var zt=ZT[ri(0,ZT.length)];
     graves.push({x:gx,y:FLOOR,state:'idle',timer:0,emergeY:0,zombie:null,type:zt,shakeX:0});
   }
@@ -324,10 +324,10 @@ function genStage(si){
     obstacles.push({x:ox,y:FLOOR-ot.h,w:ot.w,h:ot.h,t:ot.t,col:ot.col,col2:ot.col2});
     ox+=ri(180,360);
   }
-  // Patrol enemies on ground — 6 only, very spread out, alternating heights
-  for(var ei=0;ei<6;ei++){
-    var et=ZT[ri(0,ZT.length)];var ex=600+ei*700+ri(-60,60);
-    var ey=ei%2===0?FLOOR-et.sz:FLOOR-et.sz-ri(0,20);
+  // Patrol enemies on ground — 10, well spaced, alternating directions
+  for(var ei=0;ei<10;ei++){
+    var et=ZT[ri(0,ZT.length)];var ex=400+ei*450+ri(-60,60);
+    var ey=ei%2===0?FLOOR-et.sz:FLOOR-et.sz;
     enemies.push({x:ex,y:ey,vx:(ei%2===0?1:-1)*et.spd,vy:0,w:et.sz,h:et.sz,dir:ei%2===0?1:-1,
       alive:true,deathAnim:0,stunTimer:0,hp:et.hp,initHp:et.hp,col:et.col,eye:et.eye,spd:et.spd,pts:et.pts});
   }
@@ -1204,40 +1204,91 @@ function updateSpecial(){
     }
   }
   if(P.specialActive===2&&P.specialTimer===30){// Mya heart detonates at frame 30
-    enemies.forEach(function(e){if(!e.alive)return;e.hp=0;e.alive=false;P.score+=e.pts;P.specialMeter=Math.min(100,P.specialMeter+5);burst(e.x+e.w/2,e.y,'#ff44aa',8);});
-    if(boss.active&&boss.alive&&!boss.dead){boss.hp=Math.max(0,boss.hp-6);boss.hitTimer=40;burst(boss.x+boss.w/2,boss.y,'#ff44aa',14);if(boss.hp<=0)killBoss();}
+    // Kill all enemies with big bursts
+    enemies.forEach(function(e){
+      if(!e.alive)return;
+      e.hp=0;e.alive=false;P.score+=e.pts;P.specialMeter=Math.min(100,P.specialMeter+5);
+      for(var bi2=0;bi2<6;bi2++)burst(e.x+e.w/2,e.y,'#ff44aa',6);
+    });
+    if(boss.active&&boss.alive&&!boss.dead){
+      boss.hp=Math.max(0,boss.hp-6);boss.hitTimer=40;
+      for(var bi3=0;bi3<12;bi3++)burst(boss.x+boss.w/2,boss.y,'#ff44aa',10);
+      if(boss.hp<=0)killBoss();
+    }
+    // Massive screen-centre explosion burst
+    var cols2=['#ff44aa','#ff88cc','#ffbbdd','#ff0066','#ffffff','#ffccee'];
+    for(var ei4=0;ei4<60;ei4++){
+      var ea=Math.random()*6.28,er=2+Math.random()*9;
+      var ec=cols2[Math.floor(Math.random()*cols2.length)];
+      particles.push({x:cam+W/2,y:H/2,vx:Math.cos(ea)*er,vy:Math.sin(ea)*er,life:0,max:55+Math.random()*30,col:ec});
+    }
+    // Ring shockwave particles
+    for(var ri3=0;ri3<40;ri3++){
+      var ra=ri3/40*Math.PI*2;
+      particles.push({x:cam+W/2,y:H/2,vx:Math.cos(ra)*14,vy:Math.sin(ra)*14,life:0,max:30,col:'#ffccee'});
+    }
   }
 }
 function drawSpecialEffects(){
   if(P.specialActive===2&&P.specialTimer>0){// Mya heart bomb
-    var ht=90-P.specialTimer; // 0..90
+    var ht=90-P.specialTimer;
     var exploding=P.specialTimer<=30;
-    var scale2=exploding?(1+(30-P.specialTimer)/30*2):(ht/60);
-    var alpha2=exploding?Math.max(0,(P.specialTimer)/30):0.85;
     var hx=W/2,hy=H/2;
-    g.globalAlpha=alpha2;
-    g.fillStyle=exploding?'#ffffff':'#ff2266';
-    var hs=Math.max(1,scale2*Math.min(W,H)*0.55);
-    // Draw heart path scaled
-    g.save();g.translate(hx,hy);g.scale(hs/100,hs/100);
-    g.beginPath();
-    g.moveTo(0,-30);
-    g.bezierCurveTo(50,-80,100,-20,0,40);
-    g.bezierCurveTo(-100,-20,-50,-80,0,-30);
-    g.closePath();g.fill();
+
     if(!exploding){
-      g.fillStyle='rgba(255,100,180,.4)';
-      g.save();g.scale(0.7,0.7);g.translate(-10,-10);
+      // Growing heart
+      var scale2=ht/60;
+      var hs=Math.max(1,scale2*Math.min(W,H)*0.55);
+      g.globalAlpha=0.88;
+      g.fillStyle='#ff2266';
+      g.save();g.translate(hx,hy);g.scale(hs/100,hs/100);
+      g.beginPath();g.moveTo(0,-30);
+      g.bezierCurveTo(50,-80,100,-20,0,40);
+      g.bezierCurveTo(-100,-20,-50,-80,0,-30);
+      g.closePath();g.fill();
+      // Inner sheen
+      g.fillStyle='rgba(255,150,200,.35)';
+      g.save();g.scale(0.65,0.65);g.translate(-8,-8);
       g.beginPath();g.moveTo(0,-30);g.bezierCurveTo(50,-80,100,-20,0,40);g.bezierCurveTo(-100,-20,-50,-80,0,-30);g.closePath();g.fill();
       g.restore();
-    }
-    g.restore();
-    g.globalAlpha=1;
-    // Screen tint on explode
-    if(exploding&&P.specialTimer>20){
-      g.globalAlpha=(30-P.specialTimer)/10*.6;
+      g.restore();
+      g.globalAlpha=1;
+    } else {
+      // Explosion phase: white flash + expanding ring
+      var prog=(30-P.specialTimer)/30;   // 0→1
+      // Blinding white flash at the moment of detonation
+      if(P.specialTimer>=25){
+        g.globalAlpha=(30-P.specialTimer)/5;
+        g.fillStyle='#ffffff';g.fillRect(0,0,W,H);
+        g.globalAlpha=1;
+      }
+      // Pink afterglow wash
+      g.globalAlpha=Math.max(0,.7-prog*.8);
       g.fillStyle='#ff2266';g.fillRect(0,0,W,H);
       g.globalAlpha=1;
+      // Shockwave ring
+      var ringR=prog*Math.max(W,H)*0.85;
+      g.globalAlpha=Math.max(0,1-prog)*0.9;
+      g.strokeStyle='#ffbbdd';g.lineWidth=8-prog*6;
+      g.beginPath();g.arc(hx,hy,ringR,0,6.28);g.stroke();
+      g.strokeStyle='#ffffff';g.lineWidth=3-prog*2;
+      g.beginPath();g.arc(hx,hy,ringR*0.85,0,6.28);g.stroke();
+      g.globalAlpha=1;
+      // Heart fragments — 8 mini hearts shooting outward
+      var fCount=8;
+      for(var fi=0;fi<fCount;fi++){
+        var fa=fi/fCount*Math.PI*2;
+        var fd=prog*Math.min(W,H)*0.55;
+        var fx=hx+Math.cos(fa)*fd,fy=hy+Math.sin(fa)*fd;
+        var fs=(1-prog)*18;
+        if(fs<2)continue;
+        g.globalAlpha=Math.max(0,1-prog)*0.85;
+        g.fillStyle='#ff44aa';
+        g.save();g.translate(fx,fy);g.scale(fs/100,fs/100);
+        g.beginPath();g.moveTo(0,-30);g.bezierCurveTo(50,-80,100,-20,0,40);g.bezierCurveTo(-100,-20,-50,-80,0,-30);g.closePath();g.fill();
+        g.restore();
+        g.globalAlpha=1;
+      }
     }
   }
   if(P.specialActive===5&&P.specialTimer>0){// Superman heat vision trail
