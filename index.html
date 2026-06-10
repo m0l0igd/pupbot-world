@@ -9,65 +9,83 @@ body{background:#000;display:flex;flex-direction:column;align-items:center;justi
 canvas{display:block;image-rendering:pixelated;border:2px solid #440000;
        box-shadow:0 0 40px #880000,0 0 80px #330000}
 #ui{color:#664444;font:9px monospace;margin-top:3px;letter-spacing:1px}
-#touch-ui{position:fixed;bottom:0;left:0;right:0;height:160px;pointer-events:none;
+
+/* ── TOUCH UI (portrait) ─────────────────────────────────────────── */
+#touch-ui{position:fixed;bottom:0;left:0;right:0;height:170px;pointer-events:none;
            display:none;z-index:999;padding-bottom:env(safe-area-inset-bottom)}
-#dpad{position:absolute;bottom:8px;left:8px;display:grid;grid-template-columns:50px 50px 50px;grid-template-rows:50px 50px 50px;gap:3px;pointer-events:all}
-#tr{position:absolute;bottom:8px;right:8px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:all}
-.tr-row{display:flex;flex-direction:row;gap:6px}
-.tb{width:64px;height:64px;border-radius:50%;background:rgba(136,0,0,.35);
-    border:2px solid rgba(220,60,60,.5);color:rgba(255,180,180,.9);font-size:20px;
+/* D-pad: cross layout bottom-left */
+#dpad{position:absolute;bottom:8px;left:8px;
+      display:grid;grid-template-columns:50px 50px 50px;
+      grid-template-rows:50px 50px 50px;gap:3px;pointer-events:all}
+/* Right cluster: jump + blast */
+#tr{position:absolute;bottom:8px;right:8px;
+    display:flex;flex-direction:row;gap:8px;pointer-events:all}
+/* Centre: START + SPEC stacked, sitting above the d-pad/tr row */
+#centre-btns{position:absolute;bottom:10px;left:50%;
+             transform:translateX(-50%);pointer-events:all;
+             display:flex;flex-direction:column;gap:6px;align-items:center}
+.tb{width:50px;height:50px;border-radius:50%;
+    background:rgba(136,0,0,.35);
+    border:2px solid rgba(220,60,60,.5);color:rgba(255,180,180,.9);font-size:18px;
     display:flex;align-items:center;justify-content:center;
     user-select:none;cursor:pointer;touch-action:none;
     box-shadow:0 0 12px rgba(136,0,0,.4);transition:background .1s}
 .tb:active,.tb.pressed{background:rgba(180,0,0,.6);border-color:rgba(255,100,100,.9)}
-.tb.sm{width:58px;height:42px;border-radius:14px;font-size:11px;font-weight:bold;font-family:monospace}
+.dpad-empty{width:50px;height:50px;} /* invisible spacer for d-pad corners */
+.ctb{width:72px!important;height:32px!important;border-radius:10px!important;
+     font-size:10px!important;font-weight:bold;font-family:monospace}
+
+/* ── LANDSCAPE: single thin strip, full-width canvas ─────────────── */
 @media(orientation:landscape){
-  #touch-ui{height:102px}
-  .tb{width:30px;height:30px;font-size:12px}
-  #dpad{grid-template-columns:30px 30px 30px;grid-template-rows:30px 30px 30px;gap:2px;bottom:4px;left:4px}
-  #tr{bottom:4px;right:4px;gap:3px}
-  .tr-row{gap:3px}
-  #centre-btns{bottom:auto!important;top:4px;gap:4px}
-  #centre-btns .ctb{width:54px!important;height:26px!important;font-size:9px!important}
-  body{justify-content:flex-start;padding-top:2px}
-  canvas{max-height:calc(100vh - 102px)}
+  body{justify-content:flex-start;padding-top:0}
+  #touch-ui{height:68px}
+  /* Canvas takes everything above the strip */
+  canvas{max-height:calc(100vh - 68px);width:100vw!important}
+  /* Flat single-row layout */
+  #dpad{grid-template-columns:36px 36px 36px;
+        grid-template-rows:36px 36px 36px;
+        gap:2px;bottom:2px;left:4px;
+        transform:scale(0.72);transform-origin:bottom left}
+  #tr{bottom:10px;right:6px;gap:6px}
+  #centre-btns{bottom:10px;gap:4px;flex-direction:row}
+  .tb{width:44px;height:44px;font-size:16px}
+  .ctb{width:58px!important;height:28px!important;font-size:9px!important}
 }
 </style></head><body>
 <canvas id="c"></canvas>
 <div id="ui">ARROWS/WASD=MOVE | SPACE=JUMP | Z=BLAST | STOMP ENEMIES</div>
 <div id="touch-ui">
-  <!-- D-Pad left -->
+  <!-- D-Pad: corners are invisible spacers, cross buttons are active -->
   <div id="dpad">
-    <div></div>
-    <div class="tb" id="b-up" style="border-radius:12px;font-size:18px">&#9650;</div>
-    <div></div>
-    <div class="tb" id="b-left" style="border-radius:12px;font-size:18px">&#9664;</div>
-    <div style="background:rgba(60,0,0,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:rgba(255,255,255,.3)">&#10010;</div>
-    <div class="tb" id="b-right" style="border-radius:12px;font-size:18px">&#9654;</div>
-    <div></div>
-    <div class="tb" id="b-down" style="border-radius:12px;font-size:18px">&#9660;</div>
-    <div></div>
+    <div class="dpad-empty"></div>
+    <div class="tb" id="b-up" style="border-radius:10px;font-size:16px">&#9650;</div>
+    <div class="dpad-empty"></div>
+    <div class="tb" id="b-left" style="border-radius:10px;font-size:16px">&#9664;</div>
+    <div class="dpad-empty"></div>
+    <div class="tb" id="b-right" style="border-radius:10px;font-size:16px">&#9654;</div>
+    <div class="dpad-empty"></div>
+    <div class="tb" id="b-down" style="border-radius:10px;font-size:16px">&#9660;</div>
+    <div class="dpad-empty"></div>
   </div>
-  <!-- Centre: START left-of-centre, SPEC right-of-centre, no overlap with dpad or buttons -->
-  <div id="centre-btns" style="position:absolute;bottom:10px;left:50%;transform:translateX(-50%);pointer-events:all;display:flex;flex-direction:column;gap:6px;align-items:center">
-    <div class="tb ctb" id="b-start" style="width:76px;height:36px;border-radius:12px;font-size:10px;font-weight:bold;font-family:monospace;background:rgba(180,0,0,.55);border-color:rgba(255,80,80,.7)">&#9654; START</div>
-    <div class="tb ctb" id="b-special" style="width:76px;height:36px;border-radius:12px;font-size:10px;font-weight:bold;font-family:monospace;background:rgba(80,0,150,.55);border-color:rgba(180,80,255,.7)">&#9889; SPEC</div>
+  <!-- Centre: START + SPEC, stacked vertically, clear of d-pad and right buttons -->
+  <div id="centre-btns">
+    <div class="tb ctb" id="b-start" style="background:rgba(180,0,0,.55);border-color:rgba(255,80,80,.7)">&#9654; START</div>
+    <div class="tb ctb" id="b-special" style="background:rgba(80,0,150,.55);border-color:rgba(180,80,255,.7)">&#9889; SPEC</div>
   </div>
-  <!-- Right: Jump + Blast -->
+  <!-- Right: Jump + Blast side by side -->
   <div id="tr">
-    <div class="tr-row">
-      <div class="tb" id="b-jump" style="border-radius:50%">&#9650;<br><span style="font-size:8px">JUMP</span></div>
-      <div class="tb" id="b-blast" style="border-radius:50%">&#128293;<br><span style="font-size:8px">BLAST</span></div>
-    </div>
+    <div class="tb" id="b-jump">&#9650;<br><span style="font-size:7px">JUMP</span></div>
+    <div class="tb" id="b-blast">&#128293;<br><span style="font-size:7px">BLAST</span></div>
   </div>
+</div>
 </div>
 <script>
 'use strict';
 var cv=document.getElementById('c');
 var isTouch=('ontouchstart' in window)||navigator.maxTouchPoints>0;
 var W=Math.min(innerWidth-4,900);
-var H=Math.min(innerHeight-(isTouch?160:40),520);
-if(innerWidth>innerHeight&&isTouch)H=Math.min(innerHeight-102,480);
+var H=Math.min(innerHeight-(isTouch?170:40),520);
+if(innerWidth>innerHeight&&isTouch){W=innerWidth;H=Math.min(innerHeight-68,480);}
 cv.width=W;cv.height=H;var g=cv.getContext('2d');
 if(!g.roundRect)g.roundRect=function(x,y,w,h,r){r=Math.min(+r||0,w/2,h/2);
   this.beginPath();this.moveTo(x+r,y);this.lineTo(x+w-r,y);this.arcTo(x+w,y,x+w,y+r,r);
