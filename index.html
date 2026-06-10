@@ -1447,12 +1447,11 @@ cv.addEventListener('click',function(e){
     if(dp&&dp._ccx&&cx>dp._ccx&&cx<dp._ccx+dp._ccw&&cy>dp._ccy&&cy<dp._ccy+dp._cch){
       _resumeAfterCharSelect=true;state='select';return;
     }
-      _resumeAfterCharSelect=true;state='select';return;
-    }
   }
   if(state==='over'||state==='win'){
     state='select';return;
   }
+});  }
 });
 function _cvCoords(clientX,clientY){
   // Scale raw client coords to canvas logical pixels — fixes landscape mismatch
