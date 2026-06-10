@@ -4,10 +4,11 @@
 <title>Lil' Hunter - Dead of Night</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;
-     height:100vh;overflow:hidden;touch-action:none}
+body{background:#000;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+     height:100vh;overflow:hidden;touch-action:none;padding-top:0}
 canvas{display:block;image-rendering:pixelated;border:2px solid #440000;
-       box-shadow:0 0 40px #880000,0 0 80px #330000}
+       box-shadow:0 0 40px #880000,0 0 80px #330000;
+       margin:auto}
 #ui{color:#664444;font:9px monospace;margin-top:3px;letter-spacing:1px}
 
 /* ── TOUCH UI (portrait) ─────────────────────────────────────────── */
@@ -87,19 +88,16 @@ var W,H,g;
 function resizeCanvas(){
   var landscape=innerWidth>innerHeight;
   if(isTouch&&landscape){
-    W=innerWidth;
-    H=innerHeight-80;            // 80px touch strip
+    W=innerWidth; H=innerHeight-80;
   } else if(isTouch){
-    W=Math.min(innerWidth,900);
-    H=Math.min(innerHeight-170,520);
+    W=innerWidth; H=innerHeight-170;
   } else {
-    W=Math.min(innerWidth-4,900);
-    H=Math.min(innerHeight-40,520);
+    W=innerWidth-4; H=innerHeight-40;
   }
-  // Set canvas logical pixels = CSS pixels (no scaling artifacts)
+  W=Math.max(W,200); H=Math.max(H,150);
   cv.width=W; cv.height=H;
   cv.style.width=W+'px'; cv.style.height=H+'px';
-  if(g){FLOOR=H-60;}  // update floor when resizing mid-game
+  if(g){FLOOR=H-60;}
 }
 resizeCanvas();
 g=cv.getContext('2d');
@@ -208,7 +206,7 @@ var enemies=[],platforms=[],graves=[],souls=[],vials=[],obstacles=[];
 var keys={};
 
 // ── PLAYER ────────────────────────────────────────────────────
-var P={x:100,y:FLOOR-60,vx:0,vy:0,w:34,h:52,onGround:false,dir:1,
+var P={x:100,y:FLOOR-60,vx:0,vy:0,w:22,h:36,onGround:false,dir:1,
   lives:5,score:0,invTimer:0,blastCd:0,dead:false,deathVy:0,blasts:[],dropping:0,
   weapon:null,weaponAmmo:0,weaponTimer:0,
   powerupTimer:0,powerupType:null,
@@ -644,9 +642,14 @@ function drawPlayer(){
   if(P.dead)return;
   if(P.invTimer>0&&Math.floor(tick/4)%2===0)return;
   var px=scx(P.x),py=P.y;
-  g.save();if(P.dir<0){g.scale(-1,1);g.translate(-(px*2+P.w),0);}
-  g.globalAlpha=.2;fRR(px+4,FLOOR-2,P.w-8,7,4,'#000');g.globalAlpha=1;
-  drawHero(selectedChar,px,py);
+  g.save();
+  if(P.dir<0){g.scale(-1,1);g.translate(-(px*2+P.w),0);}
+  g.globalAlpha=.2;fRR(px+2,FLOOR-2,P.w-4,5,3,'#000');g.globalAlpha=1;
+  // Scale hero sprite to the crushed collision box size
+  g.translate(px+P.w/2, py+P.h/2);
+  g.scale(0.62, 0.62);
+  g.translate(-17, -26);  // re-centre around hero origin
+  drawHero(selectedChar,0,0);
   g.restore();
 }
 // ── CHARACTER SELECT ──────────────────────────────────────────
@@ -907,7 +910,7 @@ function update(){
   var sc=STAGES[stage];
   if(!boss.active&&!P.dead){
     // Scroll faster only when player sprints right; gentle crawl otherwise
-    var autoSpd=P.vx>3?0.55:P.vx>0?0.2:0.1;
+    var autoSpd=P.vx>3?0.9:P.vx>0?0.45:0.25;
     cam=Math.min(cam+autoSpd,WORLD-W);
   }
 
@@ -1392,12 +1395,14 @@ if(isTouch){
   var bst=document.getElementById('b-start');
   if(bst){
     bst.addEventListener('touchstart',function(e){e.preventDefault();startMusic();
-      if(state==='play'){state='paused';}
+      if(state==='select'){startMusic();if(_resumeAfterCharSelect){_resumeAfterCharSelect=false;state='play';}else{state='play';restart();}}
+      else if(state==='play'){state='paused';}
       else if(state==='paused'){state='play';}
       else if(state==='over'||state==='win'){state='select';}
     },{passive:false});
     bst.addEventListener('click',function(){startMusic();
-      if(state==='play'){state='paused';}
+      if(state==='select'){startMusic();if(_resumeAfterCharSelect){_resumeAfterCharSelect=false;state='play';}else{state='play';restart();}}
+      else if(state==='play'){state='paused';}
       else if(state==='paused'){state='play';}
       else if(state==='over'||state==='win'){state='select';}
     });
