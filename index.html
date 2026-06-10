@@ -266,9 +266,16 @@ function genStage(si){
   _s=si*13+7;platforms=[];graves=[];souls=[];vials=[];enemies=[];weapons=[];powerups=[];obstacles=[];
   var sc=STAGES[si];
   platforms.push({x:0,y:FLOOR,w:WORLD,h:20,ground:true});
+  // Tier heights: low = 1 jump, high = chain jump needed
+  var LOW_MIN=55, LOW_MAX=Math.floor(FLOOR*0.35);          // 35% of floor height
+  var HI_MIN=Math.floor(FLOOR*0.35), HI_MAX=Math.floor(FLOOR*0.75); // up to 75%
   var px=260;
   while(px<WORLD-500){
-    var pw=ri(70,170),py=FLOOR-ri(70,190);
+    var pw=ri(70,170);
+    // Alternate low/high tiers so player can chain up
+    var tier=Math.floor(px/600)%2;
+    var py=FLOOR-ri(tier===0?LOW_MIN:HI_MIN, tier===0?LOW_MAX:HI_MAX);
+    py=Math.max(py, 50);  // never above HUD
     platforms.push({x:px,y:py,w:pw,h:14,ground:false});
     // Souls on platforms
     for(var sx2=px+12;sx2<px+pw-12;sx2+=28)if(rnd()<.55)souls.push({x:sx2,y:py-22,alive:true,bob:rnd()*6.28});
@@ -921,7 +928,7 @@ function update(){
     return;
   }
   if(P.dropping>0)P.dropping--;
-  if((keys['ArrowUp']||keys['KeyW'])&&P.onGround){P.vy=-13.5;P.onGround=false;SFX.jump();}
+  if((keys['ArrowUp']||keys['KeyW'])&&P.onGround){P.vy=-15.5;P.onGround=false;SFX.jump();}
   if((keys['ArrowDown']||keys['KeyS'])&&P.onGround&&!P.dead){P.dropping=12;}
   if(keys['ArrowLeft']||keys['KeyA']){P.vx-=P.onGround?1.8:1;P.dir=-1;}
   if(keys['ArrowRight']||keys['KeyD']){P.vx+=P.onGround?1.8:1;P.dir=1;}
@@ -950,7 +957,38 @@ function update(){
     b.x+=b.vx;b.y+=b.vy;b.vy+=.3;b.rot+=.28;b.traveled+=Math.abs(b.vx);
     var maxBounce=P.weapon?WEAPONS[P.weapon].bounce:4;
     var maxTravel=P.weapon&&WEAPONS[P.weapon].pierce?W*6:1140;
+    // Ground bounce
     if(b.y>=FLOOR-4){b.vy=-(Math.abs(b.vy)*.78+2);b.bounces++;if(b.bounces>maxBounce||Math.abs(b.vy)<1.5)b.alive=false;}
+    // Platform bounce
+    if(b.alive){
+      for(var bpi=0;bpi<platforms.length;bpi++){
+        var bp2=platforms[bpi];if(bp2.ground)continue;
+        var inX=b.x>bp2.x&&b.x<bp2.x+bp2.w;
+        var inY=b.y>=bp2.y&&b.y<=bp2.y+bp2.h+4;
+        if(inX&&inY){
+          if(b.vy>0){b.y=bp2.y-1;b.vy=-(Math.abs(b.vy)*.72+1);}
+          else{b.y=bp2.y+bp2.h+1;b.vy=Math.abs(b.vy)*.6;}
+          b.bounces++;if(b.bounces>maxBounce)b.alive=false;break;
+        }
+      }
+    }
+    // Obstacle bounce
+    if(b.alive){
+      for(var boi=0;boi<obstacles.length;boi++){
+        var bo2=obstacles[boi];
+        var oxL=b.x>bo2.x&&b.x<bo2.x+bo2.w;
+        var oyL=b.y>bo2.y&&b.y<bo2.y+bo2.h;
+        if(oxL&&oyL){
+          // Determine which face was hit by looking at approach direction
+          var fromTop=b.vy>0&&(b.y-b.vy)<bo2.y;
+          var fromBottom=b.vy<0&&(b.y-b.vy)>bo2.y+bo2.h;
+          if(fromTop){b.y=bo2.y-1;b.vy=-(Math.abs(b.vy)*.72+1);}
+          else if(fromBottom){b.y=bo2.y+bo2.h+1;b.vy=Math.abs(b.vy)*.6;}
+          else{b.vx*=-1;if(b.vx>0)b.x=bo2.x+bo2.w+1;else b.x=bo2.x-1;}
+          b.bounces++;if(b.bounces>maxBounce)b.alive=false;break;
+        }
+      }
+    }
     if(b.traveled>maxTravel||b.x<cam-800||b.x>cam+W+800)b.alive=false;
     for(var ei2=0;ei2<enemies.length;ei2++){var e=enemies[ei2];if(!e.alive||!b.alive)continue;if(Math.abs(b.x-e.x-e.w/2)<e.w/2+8&&Math.abs(b.y-e.y-e.h/2)<e.h/2+8){var bdmg=(b.dmg||1)*(P.powerupType==='dmg2x'?2:1);e.hp-=bdmg;if(!b.pierce)b.alive=false;SFX.stomp();burst(e.x+e.w/2,e.y,'#660000',5);if(b.explode){enemies.forEach(function(e3){if(!e3.alive||e3===e)return;if(Math.hypot(b.x-e3.x-e3.w/2,b.y-e3.y-e3.h/2)<60){e3.hp-=bdmg;burst(e3.x+e3.w/2,e3.y,'#ff4400',3);}});}if(e.hp<=0){e.alive=false;P.score+=e.pts;P.specialMeter=Math.min(100,P.specialMeter+10);burst(e.x+e.w/2,e.y,'#440000',8);}}}
     if(b.alive&&boss.active&&boss.alive&&!boss.dead){if(Math.abs(b.x-(boss.x+boss.w/2))<boss.w/2+10&&Math.abs(b.y-(boss.y+boss.h/2))<boss.h/2+10){var bbd=(b.dmg||1)*(P.powerupType==='dmg2x'?2:1);boss.hp-=bbd;boss.hitTimer=18;if(!b.pierce)b.alive=false;SFX.hurt();burst(boss.x+boss.w/2,boss.y,'#4400aa',6);if(boss.hp<=0)killBoss();}}
@@ -1379,7 +1417,7 @@ if(isTouch){
   Object.keys(BK).forEach(function(id){
     var el=document.getElementById(id);if(!el)return;var code=BK[id];
     el.addEventListener('touchstart',function(e){e.preventDefault();startMusic();
-      if((code==='Space'||code==='ArrowUp')&&P.onGround){P.vy=-13.5;P.onGround=false;SFX.jump();}
+      if((code==='Space'||code==='ArrowUp')&&P.onGround){P.vy=-15.5;P.onGround=false;SFX.jump();}
       if(code==='ArrowDown'&&P.onGround)P.dropping=12;
       if(code==='KeyZ'&&P.blastCd<=0){fireWeapon();}
       keys[code]=true;el.classList.add('pressed');},{passive:false});
