@@ -694,7 +694,7 @@ function drawCharSelect(){
   g.fillStyle=ph?'#cc1111':'#880000';
   g.beginPath();g.roundRect(bx,by,bw,bh,9);g.fill();
   g.strokeStyle='#ff4444';g.lineWidth=2;g.beginPath();g.roundRect(bx,by,bw,bh,9);g.stroke();
-  lbl('\u25b6 PLAY',W/2,by+22,'#fff',13);
+  lbl(_resumeAfterCharSelect?'\u2714 SWAP & RESUME':'\u25b6 PLAY',W/2,by+22,'#fff0f8',13);
   drawCharSelect._bx=bx;drawCharSelect._by=by;drawCharSelect._bw=bw;drawCharSelect._bh=bh;
   drawCharSelect._cards=CHARS.map(function(_,i){
     var col=i%cols,row=Math.floor(i/cols);
@@ -1309,6 +1309,7 @@ function drawParticles(){particles.forEach(function(p){var al=Math.max(0,1-p.lif
 // Canvas restart button bounds (updated each frame)
 var _btnX=0,_btnY=0,_btnW=200,_btnH=48,_mx=0,_my=0;
 var drawPause={};
+var _resumeAfterCharSelect=false; // true when coming from pause screen
 function drawOver(){
   g.fillStyle='rgba(0,0,0,.9)';g.fillRect(0,0,W,H);
   lbl('YOU DIED',W/2,H/2-48,'#880000',52);
@@ -1407,9 +1408,11 @@ if(isTouch){
 // ── MAIN LOOP ────────────────────────────────────────────────
 // Mouse tracking for canvas restart button hover + click
 cv.addEventListener('mousemove',function(e){
-  var r=cv.getBoundingClientRect();_mx=e.clientX-r.left;_my=e.clientY-r.top;
+  var p=_cvCoords(e.clientX,e.clientY);_mx=p.x;_my=p.y;
   // Hover on char select cards
   if(state==='select'&&drawCharSelect._cards){
+    var pm=_cvCoords(e.clientX,e.clientY);
+    _mx=pm.x;_my=pm.y;
     _selHover=-1;
     drawCharSelect._cards.forEach(function(c){
       if(_mx>c.x&&_mx<c.x+c.w&&_my>c.y&&_my<c.y+c.h)_selHover=c.i;
@@ -1425,30 +1428,50 @@ function handleSelectClick(cx,cy){
   }
   var b=drawCharSelect;
   if(b._bx&&cx>b._bx&&cx<b._bx+b._bw&&cy>b._by&&cy<b._by+b._bh){
-    state='play';startMusic();restart();
+    startMusic();
+    if(_resumeAfterCharSelect){
+      // Just swap the skin and go back — no restart
+      _resumeAfterCharSelect=false;
+      state='play';
+    } else {
+      state='play';restart();
+    }
   }
 }
 cv.addEventListener('click',function(e){
-  var r=cv.getBoundingClientRect();
-  var cx=e.clientX-r.left,cy=e.clientY-r.top;
+  var p=_cvCoords(e.clientX,e.clientY);var cx=p.x,cy=p.y;
   if(state==='select'){handleSelectClick(cx,cy);return;}
   if(state==='paused'){
     var dp=drawPause;
     if(dp&&dp._prx&&cx>dp._prx&&cx<dp._prx+dp._prw&&cy>dp._pry&&cy<dp._pry+dp._prh){state='play';return;}
-    if(dp&&dp._ccx&&cx>dp._ccx&&cx<dp._ccx+dp._ccw&&cy>dp._ccy&&cy<dp._ccy+dp._cch){state='select';return;}
+    if(dp&&dp._ccx&&cx>dp._ccx&&cx<dp._ccx+dp._ccw&&cy>dp._ccy&&cy<dp._ccy+dp._cch){
+      _resumeAfterCharSelect=true;state='select';return;
+    }
+      _resumeAfterCharSelect=true;state='select';return;
+    }
   }
   if(state==='over'||state==='win'){
     state='select';return;
   }
 });
+function _cvCoords(clientX,clientY){
+  // Scale raw client coords to canvas logical pixels — fixes landscape mismatch
+  var r=cv.getBoundingClientRect();
+  return {
+    x:(clientX-r.left)*(cv.width/r.width),
+    y:(clientY-r.top)*(cv.height/r.height)
+  };
+}
 cv.addEventListener('touchend',function(e){
-  var r=cv.getBoundingClientRect();var t=e.changedTouches[0];
-  var cx=t.clientX-r.left,cy=t.clientY-r.top;
+  var t=e.changedTouches[0];
+  var p=_cvCoords(t.clientX,t.clientY);var cx=p.x,cy=p.y;
   if(state==='select'){e.preventDefault();handleSelectClick(cx,cy);return;}
   if(state==='paused'){
     var dp2=drawPause;
     if(dp2&&dp2._prx&&cx>dp2._prx&&cx<dp2._prx+dp2._prw&&cy>dp2._pry&&cy<dp2._pry+dp2._prh){e.preventDefault();state='play';return;}
-    if(dp2&&dp2._ccx&&cx>dp2._ccx&&cx<dp2._ccx+dp2._ccw&&cy>dp2._ccy&&cy<dp2._ccy+dp2._cch){e.preventDefault();state='select';return;}
+    if(dp2&&dp2._ccx&&cx>dp2._ccx&&cx<dp2._ccx+dp2._ccw&&cy>dp2._ccy&&cy<dp2._ccy+dp2._cch){
+      e.preventDefault();_resumeAfterCharSelect=true;state='select';return;
+    }
   }
   if(state==='over'||state==='win'){
     if(cx>_btnX&&cx<_btnX+_btnW&&cy>_btnY&&cy<_btnY+_btnH){e.preventDefault();startMusic();restart();}
